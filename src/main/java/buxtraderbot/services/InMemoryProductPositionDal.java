@@ -1,10 +1,15 @@
 package buxtraderbot.services;
 
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+//@Profile({"local", "beta"})
+@Service
 public class InMemoryProductPositionDal implements ProductPositionDal {
     private Map<String, List<String>> productPositionMap = new HashMap<>();
 
@@ -21,6 +26,11 @@ public class InMemoryProductPositionDal implements ProductPositionDal {
 
     @Override
     public void sellPositonsForProductId(String productId) {
+        productPositionMap.remove(productId);
+    }
 
+    @Override
+    public List<String> getProductPositions(String productId) {
+        return productPositionMap.get(productId);
     }
 }

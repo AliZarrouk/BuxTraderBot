@@ -1,11 +1,11 @@
-package buxtraderbot.models;
+package buxtraderbot.models.websocketmessages;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class ProductPriceUpdate {
+public class ProductPriceUpdateSubscription {
     private String productId;
     private Double currentPrice;
 }
