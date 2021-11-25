@@ -8,7 +8,10 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import javax.annotation.PostConstruct;
 import java.net.URI;
@@ -33,8 +36,8 @@ public class BuxMarketSocketConnector {
         this.listener = listener;
     }
 
-    @PostConstruct
-    public void postConstruct() {
+    @EventListener
+    public void handleContextRefresh(ContextRefreshedEvent event) {
         connect();
     }
 

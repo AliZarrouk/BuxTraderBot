@@ -8,6 +8,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.integration.annotation.ServiceActivator;
+import org.springframework.integration.config.EnableIntegration;
+import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
@@ -17,7 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static buxtraderbot.configuration.ChannelConfiguration.PRODUCT_SUBSCRIPTION_SCHANNEL;
+import static buxtraderbot.configuration.ChannelConfiguration.*;
 
 @Service
 public class Trader {
@@ -31,8 +35,10 @@ public class Trader {
 
     private final MessageChannel productSubscriptionChannell;
 
+    private Double funds;
+
     @Autowired
-    public Trader(@Qualifier(PRODUCT_SUBSCRIPTION_SCHANNEL) MessageChannel productSubscriptionChannel,
+    public Trader(@Qualifier(PRODUCT_SUBSCRIPTION_CHANNEL) MessageChannel productSubscriptionChannel,
                   PositionBuyerSeller positionBuyerSeller,
                   ProductPositionDal productPositionDal) {
         this.positionBuyerSeller = positionBuyerSeller;
@@ -46,7 +52,9 @@ public class Trader {
         productSellingBuyingPricesMap = new HashMap<>();
     }
 
-    public void processOrderUpdate(ProductPriceUpdate productPriceUpdate) {
+    @ServiceActivator(inputChannel = PRICE_UPDATE_CHANNEL)
+    public void processOrderUpdate(Message<ProductPriceUpdate> productPriceUpdateMessage) {
+        var productPriceUpdate = productPriceUpdateMessage.getPayload();
         if (!productSellingBuyingPricesMap.containsKey(productPriceUpdate.getProductId())) {
             logger.error("Prouct not tracked {}", productPriceUpdate.getProductId());
             return;
@@ -82,9 +90,15 @@ public class Trader {
         productPositionDal.sellPositonsForProductId(productPriceUpdate.getProductId());
     }
 
-    public void processConnectionSuccessful() {
+    @ServiceActivator(inputChannel = SUCCESSFUL_CONNECTION_CHANNEL)
+    public void processConnectionSuccessful(Message<String> message) {
         var subscription = new Subscription();
         subscription.setSubscribeTo(new ArrayList<>(productSellingBuyingPricesMap.keySet()));
         productSubscriptionChannell.send(MessageBuilder.withPayload(subscription).build());
+    }
+
+    @ServiceActivator(inputChannel = PORTFOLIO_VALUE_CHANNEL)
+    public void processPortfolioValueUpdate(Message<Double> doubleMessage) {
+        funds = doubleMessage.getPayload();
     }
 }

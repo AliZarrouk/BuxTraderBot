@@ -14,8 +14,9 @@ import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.Arrays;
 
-import static buxtraderbot.configuration.ChannelConfiguration.PRODUCT_SUBSCRIPTION_SCHANNEL;
+import static buxtraderbot.configuration.ChannelConfiguration.PRODUCT_SUBSCRIPTION_CHANNEL;
 
 @Service
 public class BuxMarketSocketListener implements WebSocketListener {
@@ -61,7 +62,7 @@ public class BuxMarketSocketListener implements WebSocketListener {
         feedProcessor.process(s);
     }
 
-    @ServiceActivator(inputChannel = PRODUCT_SUBSCRIPTION_SCHANNEL)
+    @ServiceActivator(inputChannel = PRODUCT_SUBSCRIPTION_CHANNEL)
     public void send(Message<Subscription> payload) {
         try {
             session.getRemote().sendString(om.writeValueAsString(payload.getPayload()));
