@@ -8,18 +8,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.annotation.ServiceActivator;
-import org.springframework.integration.config.EnableIntegration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static buxtraderbot.configuration.ChannelConfiguration.*;
 
@@ -93,7 +91,9 @@ public class Trader {
     @ServiceActivator(inputChannel = SUCCESSFUL_CONNECTION_CHANNEL)
     public void processConnectionSuccessful(Message<String> message) {
         var subscription = new Subscription();
-        subscription.setSubscribeTo(new ArrayList<>(productSellingBuyingPricesMap.keySet()));
+        var products = productSellingBuyingPricesMap.keySet().stream().map(x -> "trading.product." + x)
+                .collect(Collectors.toList());
+        subscription.setSubscribeTo(products);
         productSubscriptionChannell.send(MessageBuilder.withPayload(subscription).build());
     }
 

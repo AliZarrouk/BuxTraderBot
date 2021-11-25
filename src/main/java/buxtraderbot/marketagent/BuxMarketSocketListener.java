@@ -14,7 +14,6 @@ import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 import static buxtraderbot.configuration.ChannelConfiguration.PRODUCT_SUBSCRIPTION_CHANNEL;
 
