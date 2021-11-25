@@ -1,7 +1,6 @@
 package buxtraderbot.marketagent;
 
 import buxtraderbot.exceptions.MarketConnectorException;
-import buxtraderbot.models.websocketmessages.ProductPriceUpdateSubscription;
 import buxtraderbot.models.websocketmessages.Subscription;
 import buxtraderbot.services.FeedProcessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketListener;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
@@ -21,13 +19,13 @@ import static buxtraderbot.configuration.ChannelConfiguration.PRODUCT_SUBSCRIPTI
 
 @Service
 public class BuxMarketSocketListener implements WebSocketListener {
-    private Logger logger = LogManager.getLogger(BuxMarketSocketListener.class);
+    private final Logger logger = LogManager.getLogger(BuxMarketSocketListener.class);
 
     private static final ObjectMapper om = new ObjectMapper();
 
     private Session session;
 
-    private FeedProcessor feedProcessor;
+    private final FeedProcessor feedProcessor;
 
     @Autowired
     public BuxMarketSocketListener(FeedProcessor feedProcessor) {

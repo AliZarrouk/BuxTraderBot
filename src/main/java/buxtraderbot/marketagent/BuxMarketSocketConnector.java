@@ -3,8 +3,6 @@ package buxtraderbot.marketagent;
 import buxtraderbot.exceptions.MarketConnectorException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +15,7 @@ import java.net.URI;
 
 @Configuration
 public class BuxMarketSocketConnector {
-    private Logger logger = LogManager.getLogger(BuxMarketSocketConnector.class);
+    private final Logger logger = LogManager.getLogger(BuxMarketSocketConnector.class);
 
     @Value("${market.url.feed}")
     private String marketFeedUrl;
@@ -28,7 +26,7 @@ public class BuxMarketSocketConnector {
     @Value("${header.accept.language}")
     private String acceptLanguage;
 
-    private BuxMarketSocketListener listener;
+    private final BuxMarketSocketListener listener;
 
     @Autowired
     public BuxMarketSocketConnector(BuxMarketSocketListener listener) {

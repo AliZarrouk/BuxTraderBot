@@ -12,11 +12,11 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class FeedProcessor {
-    private Logger logger = LogManager.getLogger(FeedProcessor.class);
+    private final Logger logger = LogManager.getLogger(FeedProcessor.class);
 
     private static final ObjectMapper om = new ObjectMapper();
 
-    private Trader trader;
+    private final Trader trader;
 
     @Autowired
     public FeedProcessor(Trader trader) {

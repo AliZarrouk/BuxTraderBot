@@ -16,21 +16,20 @@ import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static buxtraderbot.configuration.ChannelConfiguration.PRODUCT_SUBSCRIPTION_SCHANNEL;
 
 @Service
 public class Trader {
-    private Logger logger = LogManager.getLogger(Trader.class);
+    private final Logger logger = LogManager.getLogger(Trader.class);
 
-    private PositionBuyerSeller positionBuyerSeller;
+    private final PositionBuyerSeller positionBuyerSeller;
 
-    private ProductPositionDal productPositionDal;
+    private final ProductPositionDal productPositionDal;
 
     private Map<String, ProductSellingBuyingPrices> productSellingBuyingPricesMap;
 
-    private MessageChannel productSubscriptionChannell;
+    private final MessageChannel productSubscriptionChannell;
 
     @Autowired
     public Trader(@Qualifier(PRODUCT_SUBSCRIPTION_SCHANNEL) MessageChannel productSubscriptionChannel,
@@ -79,7 +78,7 @@ public class Trader {
         }
 
         productPositionDal.getProductPositions(productPriceUpdate.getProductId())
-                .forEach(p -> positionBuyerSeller.clostPosition(p));
+                .forEach(positionBuyerSeller::clostPosition);
         productPositionDal.sellPositonsForProductId(productPriceUpdate.getProductId());
     }
 
