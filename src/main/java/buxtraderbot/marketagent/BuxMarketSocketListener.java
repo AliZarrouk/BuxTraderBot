@@ -45,7 +45,7 @@ public class BuxMarketSocketListener implements WebSocketListener {
 
     @Override
     public void onWebSocketError(Throwable throwable) {
-        logger.info("Connection error");
+        logger.error("Connection error", throwable);
     }
 
     @Override
@@ -55,9 +55,6 @@ public class BuxMarketSocketListener implements WebSocketListener {
 
     @Override
     public void onWebSocketText(String s) {
-        logger.info("onWebSocketText");
-        // get message type
-        // send trader if price update
         feedProcessor.process(s);
     }
 

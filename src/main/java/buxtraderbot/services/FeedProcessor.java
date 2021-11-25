@@ -36,26 +36,20 @@ public class FeedProcessor {
 
     public void process(String payload) {
         if (payload.contains("connect.connected")) {
-            logger.info("Received connection OK");
+            logger.info("Connection established");
             successfulConnectionChannel.send(MessageBuilder.withPayload("").build());
             return;
         }
 
         if (payload.contains("connect.failed")) {
             logger.info("Received connection Failed");
-            // retry
-            // send for retry
+            // retry ?
             return;
         }
 
         if (payload.contains("portfolio.performance")) {
             logger.info("Received portfolio performance message");
-            // update portfolio
-            String[] splitted = payload.split("amount");
-            int end = splitted[1].indexOf('}') - 1;
-            String substring = splitted[1].substring(3, end);
-            Double d = Double.parseDouble(substring);
-            portfolioValueChannel.send(MessageBuilder.withPayload(d).build());
+            portfolioValueChannel.send(MessageBuilder.withPayload(getFunds(payload)).build());
             return;
         }
 
@@ -75,5 +69,13 @@ public class FeedProcessor {
         }
 
         logger.warn("Unknown message received {}, ignoring", payload);
+    }
+
+    private Double getFunds(String payload) {
+        String[] splitted = payload.split("amount");
+        int end = splitted[1].indexOf('}') - 1;
+        String substring = splitted[1].substring(3, end);
+        Double d = Double.parseDouble(substring);
+        return d;
     }
 }

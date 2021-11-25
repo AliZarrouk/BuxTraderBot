@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import static buxtraderbot.configuration.ChannelConfiguration.*;
@@ -33,6 +35,7 @@ public class Trader {
 
     private final MessageChannel productSubscriptionChannell;
 
+    private ReadWriteLock lock = new ReentrantReadWriteLock(true);
     private Double funds;
 
     @Autowired
@@ -48,6 +51,20 @@ public class Trader {
     public void postConstruct() {
         // prepare positions with prices to buy, upperSell and lowerSell
         productSellingBuyingPricesMap = new HashMap<>();
+    }
+
+    private Double getFunds() {
+        Double result;
+        lock.readLock().lock();
+        result = funds;
+        lock.readLock().unlock();
+        return result;
+    }
+
+    private void updateFunds(Double funds) {
+        lock.writeLock().lock();
+        this.funds = funds;
+        lock.writeLock().unlock();
     }
 
     @ServiceActivator(inputChannel = PRICE_UPDATE_CHANNEL)
@@ -90,8 +107,13 @@ public class Trader {
 
     @ServiceActivator(inputChannel = SUCCESSFUL_CONNECTION_CHANNEL)
     public void processConnectionSuccessful(Message<String> message) {
+        if (productSellingBuyingPricesMap.keySet().isEmpty()) {
+            return;
+        }
+
         var subscription = new Subscription();
-        var products = productSellingBuyingPricesMap.keySet().stream().map(x -> "trading.product." + x)
+        var products = productSellingBuyingPricesMap.keySet()
+                .stream().map(x -> "trading.product." + x)
                 .collect(Collectors.toList());
         subscription.setSubscribeTo(products);
         productSubscriptionChannell.send(MessageBuilder.withPayload(subscription).build());
@@ -99,6 +121,23 @@ public class Trader {
 
     @ServiceActivator(inputChannel = PORTFOLIO_VALUE_CHANNEL)
     public void processPortfolioValueUpdate(Message<Double> doubleMessage) {
-        funds = doubleMessage.getPayload();
+        updateFunds(doubleMessage.getPayload());
+    }
+
+    private Double getInvestment(Double buyPrice, Double currentPrice) {
+        if (getFunds() == 0d) {
+            return 0d;
+        }
+
+        if (currentPrice <= (buyPrice/2)) {
+            // a bargain ! all innnn!
+            Double result = getFunds();
+            updateFunds(0d);
+            return result;
+        }
+
+        Double result =  0.2 * getFunds();
+        updateFunds(getFunds() - result);
+        return result;
     }
 }
