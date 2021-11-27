@@ -72,6 +72,6 @@ public class PositionBuyerSeller {
         BigDecimal bigDecimal = new BigDecimal(String.valueOf(amount));
         int intValue = bigDecimal.intValue();
         return bigDecimal.subtract(
-                new BigDecimal(intValue)).toPlainString().length();
+                new BigDecimal(intValue)).toPlainString().length() - 2;
     }
 }
