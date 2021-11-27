@@ -92,7 +92,7 @@ public class Trader {
             logger.info("Got {} which is >= than upper sell price for product {}. " +
                             "Closing all positions.",
                     productSellingBuyingPrices.getUpperSellPrice(),
-                    productPriceUpdate.getCurrentPrice());
+                    productPriceUpdate.getProductId());
             productPositionDal.getProductPositions(productPriceUpdate.getProductId())
                     .forEach(positionBuyerSeller::closePosition);
             productPositionDal.sellPositonsForProductId(productPriceUpdate.getProductId());
@@ -103,7 +103,7 @@ public class Trader {
             logger.info("Got {} which is <= than lower sell price for product {}. " +
                             "Closing all positions.",
                     productSellingBuyingPrices.getUpperSellPrice(),
-                    productPriceUpdate.getCurrentPrice());
+                    productPriceUpdate.getProductId());
             productPositionDal.getProductPositions(productPriceUpdate.getProductId())
                     .forEach(positionBuyerSeller::closePosition);
             productPositionDal.sellPositonsForProductId(productPriceUpdate.getProductId());
