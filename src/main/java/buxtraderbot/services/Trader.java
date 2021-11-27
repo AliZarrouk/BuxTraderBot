@@ -14,7 +14,6 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -33,9 +32,9 @@ public class Trader {
 
     private Map<String, ProductSellingBuyingPrices> productSellingBuyingPricesMap;
 
-    private final MessageChannel productSubscriptionChannell;
+    private final MessageChannel productSubscriptionChannel;
 
-    private ReadWriteLock lock = new ReentrantReadWriteLock(true);
+    private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
     private Double funds;
 
     @Autowired
@@ -44,12 +43,7 @@ public class Trader {
                   ProductPositionDal productPositionDal) {
         this.positionBuyerSeller = positionBuyerSeller;
         this.productPositionDal = productPositionDal;
-        this.productSubscriptionChannell = productSubscriptionChannel;
-    }
-
-    @PostConstruct
-    public void postConstruct() {
-        // prepare positions with prices to buy, upperSell and lowerSell
+        this.productSubscriptionChannel = productSubscriptionChannel;
         productSellingBuyingPricesMap = new HashMap<>();
     }
 
@@ -69,6 +63,10 @@ public class Trader {
 
     @ServiceActivator(inputChannel = PRICE_UPDATE_CHANNEL)
     public void processOrderUpdate(Message<ProductPriceUpdate> productPriceUpdateMessage) {
+        logger.info("Received price {} for product with id {}",
+                productPriceUpdateMessage.getPayload().getCurrentPrice(),
+                productPriceUpdateMessage.getPayload().getProductId());
+
         var productPriceUpdate = productPriceUpdateMessage.getPayload();
         if (!productSellingBuyingPricesMap.containsKey(productPriceUpdate.getProductId())) {
             logger.error("Product not tracked {}", productPriceUpdate.getProductId());
@@ -78,31 +76,34 @@ public class Trader {
         var productSellingBuyingPrices
                 = productSellingBuyingPricesMap.get(productPriceUpdate.getProductId());
 
-        if (productSellingBuyingPrices.getBuyPrice() >= productPriceUpdate.getCurrentPrice()) {
-            var positionId = positionBuyerSeller.openPosition(productPriceUpdate.getProductId(),
-                    getInvestment(productSellingBuyingPrices.getBuyPrice(),
-                            productPriceUpdate.getCurrentPrice()));
-            productPositionDal.registerPositionForProductId(productPriceUpdate.getProductId(), positionId);
-            logger.info("Position {} opened for product with ID {}", positionId,
-                    productPriceUpdate.getProductId());
+        if (productPositionDal.getProductPositions(productPriceUpdate.getProductId()).isEmpty()) {
+            if (productSellingBuyingPrices.getBuyPrice() >= productPriceUpdate.getCurrentPrice()) {
+                var positionId = positionBuyerSeller.openPosition(productPriceUpdate.getProductId(),
+                        getInvestment(productSellingBuyingPrices.getBuyPrice(),
+                                productPriceUpdate.getCurrentPrice()));
+                productPositionDal.registerPositionForProductId(productPriceUpdate.getProductId(), positionId);
+                logger.info("Position {} opened for product with ID {}", positionId,
+                        productPriceUpdate.getProductId());
+            }
             return;
         }
 
-        if (productSellingBuyingPrices.getUpperSellPrice() >= productPriceUpdate.getCurrentPrice()) {
+        if (productPriceUpdate.getCurrentPrice() >= productSellingBuyingPrices.getUpperSellPrice()) {
             logger.info("Got {} which is >= than upper sell price for product {}. " +
                             "Closing all positions.",
-                    productPriceUpdate.getCurrentPrice(),
-                    productSellingBuyingPrices.getUpperSellPrice());
+                    productSellingBuyingPrices.getUpperSellPrice(),
+                    productPriceUpdate.getCurrentPrice());
             productPositionDal.getProductPositions(productPriceUpdate.getProductId())
                     .forEach(positionBuyerSeller::closePosition);
             productPositionDal.sellPositonsForProductId(productPriceUpdate.getProductId());
+            return;
         }
 
-        if (productSellingBuyingPrices.getLowerSellPrice() <= productPriceUpdate.getCurrentPrice()) {
+        if (productPriceUpdate.getCurrentPrice() <= productSellingBuyingPrices.getLowerSellPrice()) {
             logger.info("Got {} which is <= than lower sell price for product {}. " +
                             "Closing all positions.",
-                    productPriceUpdate.getCurrentPrice(),
-                    productSellingBuyingPrices.getUpperSellPrice());
+                    productSellingBuyingPrices.getUpperSellPrice(),
+                    productPriceUpdate.getCurrentPrice());
             productPositionDal.getProductPositions(productPriceUpdate.getProductId())
                     .forEach(positionBuyerSeller::closePosition);
             productPositionDal.sellPositonsForProductId(productPriceUpdate.getProductId());
@@ -120,7 +121,7 @@ public class Trader {
                 .stream().map(x -> "trading.product." + x)
                 .collect(Collectors.toList());
         subscription.setSubscribeTo(products);
-        productSubscriptionChannell.send(MessageBuilder.withPayload(subscription).build());
+        productSubscriptionChannel.send(MessageBuilder.withPayload(subscription).build());
     }
 
     @ServiceActivator(inputChannel = PORTFOLIO_VALUE_CHANNEL)
@@ -140,7 +141,7 @@ public class Trader {
             return result;
         }
 
-        Double result =  0.2 * getFunds();
+        Double result =  0.3 * getFunds();
         updateFunds(getFunds() - result);
         return result;
     }
