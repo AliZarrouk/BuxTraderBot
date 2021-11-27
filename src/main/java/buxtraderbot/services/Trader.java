@@ -71,38 +71,42 @@ public class Trader {
     public void processOrderUpdate(Message<ProductPriceUpdate> productPriceUpdateMessage) {
         var productPriceUpdate = productPriceUpdateMessage.getPayload();
         if (!productSellingBuyingPricesMap.containsKey(productPriceUpdate.getProductId())) {
-            logger.error("Prouct not tracked {}", productPriceUpdate.getProductId());
+            logger.error("Product not tracked {}", productPriceUpdate.getProductId());
             return;
         }
 
         var productSellingBuyingPrices
                 = productSellingBuyingPricesMap.get(productPriceUpdate.getProductId());
 
-        if (productSellingBuyingPrices.getBuyPrice() <= productPriceUpdate.getCurrentPrice()) {
-            var positionId = positionBuyerSeller.openPosition(productPriceUpdate.getProductId());
+        if (productSellingBuyingPrices.getBuyPrice() >= productPriceUpdate.getCurrentPrice()) {
+            var positionId = positionBuyerSeller.openPosition(productPriceUpdate.getProductId(),
+                    getInvestment(productSellingBuyingPrices.getBuyPrice(),
+                            productPriceUpdate.getCurrentPrice()));
             productPositionDal.registerPositionForProductId(productPriceUpdate.getProductId(), positionId);
             logger.info("Position {} opened for product with ID {}", positionId,
                     productPriceUpdate.getProductId());
             return;
         }
 
-        if (productSellingBuyingPrices.getUpperSellPrice() <= productPriceUpdate.getCurrentPrice()) {
+        if (productSellingBuyingPrices.getUpperSellPrice() >= productPriceUpdate.getCurrentPrice()) {
             logger.info("Got {} which is >= than upper sell price for product {}. " +
                             "Closing all positions.",
                     productPriceUpdate.getCurrentPrice(),
                     productSellingBuyingPrices.getUpperSellPrice());
+            productPositionDal.getProductPositions(productPriceUpdate.getProductId())
+                    .forEach(positionBuyerSeller::closePosition);
+            productPositionDal.sellPositonsForProductId(productPriceUpdate.getProductId());
         }
 
-        if (productSellingBuyingPrices.getLowerSellPrice() >= productPriceUpdate.getCurrentPrice()) {
+        if (productSellingBuyingPrices.getLowerSellPrice() <= productPriceUpdate.getCurrentPrice()) {
             logger.info("Got {} which is <= than lower sell price for product {}. " +
                             "Closing all positions.",
                     productPriceUpdate.getCurrentPrice(),
                     productSellingBuyingPrices.getUpperSellPrice());
+            productPositionDal.getProductPositions(productPriceUpdate.getProductId())
+                    .forEach(positionBuyerSeller::closePosition);
+            productPositionDal.sellPositonsForProductId(productPriceUpdate.getProductId());
         }
-
-        productPositionDal.getProductPositions(productPriceUpdate.getProductId())
-                .forEach(positionBuyerSeller::clostPosition);
-        productPositionDal.sellPositonsForProductId(productPriceUpdate.getProductId());
     }
 
     @ServiceActivator(inputChannel = SUCCESSFUL_CONNECTION_CHANNEL)

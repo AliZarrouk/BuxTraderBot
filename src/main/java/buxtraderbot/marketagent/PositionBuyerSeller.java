@@ -5,11 +5,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class PositionBuyerSeller {
 
-    public String openPosition(String productId) {
+    public String openPosition(String productId, Double amount) {
         return null;
     }
 
-    public void clostPosition(String positionId) {
+    public void closePosition(String positionId) {
 
     }
 }
