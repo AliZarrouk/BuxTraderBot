@@ -8,12 +8,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -30,12 +34,19 @@ public class Trader {
 
     private final ProductPositionDal productPositionDal;
 
-    private Map<String, ProductSellingBuyingPrices> productSellingBuyingPricesMap;
+    private final Map<String, ProductSellingBuyingPrices> productSellingBuyingPricesMap;
 
     private final MessageChannel productSubscriptionChannel;
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
+
     private Double funds;
+
+    @Value("${product-buy-sell-file}")
+    private String productBuySellFilePath;
+
+    @Value("${product-buy-sell-file-separator}")
+    private String productBuySellFileSeparator;
 
     @Autowired
     public Trader(@Qualifier(PRODUCT_SUBSCRIPTION_CHANNEL) MessageChannel productSubscriptionChannel,
@@ -112,6 +123,8 @@ public class Trader {
 
     @ServiceActivator(inputChannel = SUCCESSFUL_CONNECTION_CHANNEL)
     public void processConnectionSuccessful(Message<String> message) {
+        parseProductBuySellFilePath();
+
         if (productSellingBuyingPricesMap.keySet().isEmpty()) {
             return;
         }
@@ -144,5 +157,25 @@ public class Trader {
         Double result =  0.3 * getFunds();
         updateFunds(getFunds() - result);
         return result;
+    }
+
+    private void parseProductBuySellFilePath() {
+        try (BufferedReader br = new BufferedReader(new FileReader(productBuySellFilePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                var splitted = line.split(productBuySellFileSeparator);
+                if (splitted.length < 4) {
+                    continue;
+                }
+                var productSellingBuyingPrices = new ProductSellingBuyingPrices();
+                productSellingBuyingPrices.setBuyPrice(Double.parseDouble(splitted[1]));
+                productSellingBuyingPrices.setUpperSellPrice(Double.parseDouble(splitted[2]));
+                productSellingBuyingPrices.setLowerSellPrice(Double.parseDouble(splitted[3]));
+                productSellingBuyingPricesMap.put(splitted[0], productSellingBuyingPrices);
+            }
+        } catch (IOException e) {
+            logger.error("Error parsing config file", e);
+            throw new RuntimeException(e);
+        }
     }
 }

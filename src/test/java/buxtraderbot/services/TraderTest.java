@@ -3,19 +3,24 @@ package buxtraderbot.services;
 import buxtraderbot.marketagent.PositionBuyerSeller;
 import buxtraderbot.models.ProductPriceUpdate;
 import buxtraderbot.models.ProductSellingBuyingPrices;
+import buxtraderbot.models.websocketmessages.Subscription;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.integration.support.MessageBuilder;
+import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Unit tests for {@link Trader} class.
@@ -33,6 +38,9 @@ public class TraderTest {
 
     @Mock
     private ProductPositionDal productPositionDal;
+
+    @Captor
+    private ArgumentCaptor<Message<Subscription>> subscriptionMessageArgumentCaptor;
 
     @Before
     public void setUp() {
@@ -53,6 +61,7 @@ public class TraderTest {
     public void tearDown() {
         Mockito.verifyNoMoreInteractions(positionBuyerSeller);
         Mockito.verifyNoMoreInteractions(productPositionDal);
+        Mockito.verifyNoMoreInteractions(productSubscriptionChannel);
     }
 
     @Test
@@ -135,5 +144,45 @@ public class TraderTest {
         Mockito.verify(productPositionDal).getProductPositions("p1");
         Mockito.verify(positionBuyerSeller).openPosition("p1", 500.0d);
         Mockito.verify(productPositionDal).registerPositionForProductId("p1", "1");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void processConnectionSuccessful() {
+        // arrange
+        var classLoader = getClass().getClassLoader();
+        var resource = classLoader.getResource("product-buy-sell-price-config");
+        assert resource != null;
+        ReflectionTestUtils.setField(underTest, "productBuySellFilePath",
+                resource.getFile());
+        ReflectionTestUtils.setField(underTest, "productBuySellFileSeparator",
+                "-");
+
+
+        // act
+        underTest.processConnectionSuccessful(MessageBuilder.withPayload("").build());
+
+        // assert
+        Mockito.verify(productSubscriptionChannel).send(subscriptionMessageArgumentCaptor.capture());
+        var subscription = subscriptionMessageArgumentCaptor.getValue().getPayload();
+
+        assert subscription.getSubscribeTo().size() == 2;
+        assert subscription.getSubscribeTo().contains("trading.product.p1");
+        assert subscription.getSubscribeTo().contains("trading.product.p2");
+
+        var productSellingBuyingPricesMap = (Map<String, ProductSellingBuyingPrices>) ReflectionTestUtils
+                .getField(underTest, "productSellingBuyingPricesMap");
+        assert productSellingBuyingPricesMap != null;
+        var p1 = productSellingBuyingPricesMap.get("p1");
+        assert p1 != null;
+        assert p1.getUpperSellPrice() == 30;
+        assert p1.getLowerSellPrice() == 15;
+        assert p1.getBuyPrice() == 21;
+
+        var p2 = productSellingBuyingPricesMap.get("p2");
+        assert p2 != null;
+        assert p2.getUpperSellPrice() == 11.3;
+        assert p2.getLowerSellPrice() == 6.2;
+        assert p2.getBuyPrice() == 8.98;
     }
 }
