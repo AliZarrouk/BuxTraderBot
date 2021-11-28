@@ -56,8 +56,8 @@ public class FeedProcessor {
         if (payload.contains("trading.quote")) {
             logger.info("Received trading quote");
             try {
-                TradingQuote tradingQuote = om.readValue(payload, TradingQuote.class);
-                ProductPriceUpdate productPriceUpdate = new ProductPriceUpdate();
+                var tradingQuote = om.readValue(payload, TradingQuote.class);
+                var productPriceUpdate = new ProductPriceUpdate();
                 productPriceUpdate.setProductId(tradingQuote.getBody().getSecurityId());
                 productPriceUpdate.setCurrentPrice(Double.parseDouble(tradingQuote.getBody().getCurrentPrice()));
                 priceUpdateChannel.send(MessageBuilder.withPayload(productPriceUpdate).build());
