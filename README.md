@@ -18,4 +18,6 @@ p1-12.3-98.2-1.2
 
 More lines, more products, more $$$$$
 
+I added a file named _sample_input_ for reference.
+
 Make it rain folks
