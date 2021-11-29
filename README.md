@@ -12,6 +12,8 @@ For the sake of simplicity, the bot uses in memory persistence to track the trad
 ## How to run
 run the script runme.sh with path of file containing products to trade in this format:
 
+`./runme.sh INPUT`
+
 PRODUCT_ID **-** BUY_PRICE **-** UPPER_SELL_PRICE **-** LOWER_SELL_PRICE
 
 Prices should be **.** separated.
