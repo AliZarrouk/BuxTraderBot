@@ -83,7 +83,7 @@ public class TraderTest {
         Mockito.verify(positionBuyerSeller).closePosition("2");
         Mockito.verify(positionBuyerSeller).closePosition("3");
         Mockito.verify(positionBuyerSeller).closePosition("4");
-        Mockito.verify(productPositionDal).sellPositonsForProductId("p1");
+        Mockito.verify(productPositionDal).sellPositionsForProductId("p1");
     }
 
     @Test
@@ -105,7 +105,7 @@ public class TraderTest {
         Mockito.verify(positionBuyerSeller).closePosition("2");
         Mockito.verify(positionBuyerSeller).closePosition("3");
         Mockito.verify(positionBuyerSeller).closePosition("4");
-        Mockito.verify(productPositionDal).sellPositonsForProductId("p1");
+        Mockito.verify(productPositionDal).sellPositionsForProductId("p1");
     }
 
     @Test

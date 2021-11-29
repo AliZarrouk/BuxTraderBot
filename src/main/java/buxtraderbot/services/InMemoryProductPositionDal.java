@@ -16,14 +16,14 @@ public class InMemoryProductPositionDal implements ProductPositionDal {
         if (productPositionMap.containsKey(productId)) {
             productPositionMap.get(productId).add(positionId);
         } else {
-            ArrayList<String> positions = new ArrayList<>();
+            var positions = new ArrayList<String>();
             positions.add(positionId);
             productPositionMap.put(productId, positions);
         }
     }
 
     @Override
-    public void sellPositonsForProductId(String productId) {
+    public void sellPositionsForProductId(String productId) {
         productPositionMap.remove(productId);
     }
 

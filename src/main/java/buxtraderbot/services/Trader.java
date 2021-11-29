@@ -106,7 +106,7 @@ public class Trader {
                     productPriceUpdate.getProductId());
             productPositionDal.getProductPositions(productPriceUpdate.getProductId())
                     .forEach(positionBuyerSeller::closePosition);
-            productPositionDal.sellPositonsForProductId(productPriceUpdate.getProductId());
+            productPositionDal.sellPositionsForProductId(productPriceUpdate.getProductId());
             return;
         }
 
@@ -117,7 +117,7 @@ public class Trader {
                     productPriceUpdate.getProductId());
             productPositionDal.getProductPositions(productPriceUpdate.getProductId())
                     .forEach(positionBuyerSeller::closePosition);
-            productPositionDal.sellPositonsForProductId(productPriceUpdate.getProductId());
+            productPositionDal.sellPositionsForProductId(productPriceUpdate.getProductId());
         }
     }
 
