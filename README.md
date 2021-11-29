@@ -6,6 +6,9 @@ A trader bot that would make you filthy rich.
 ## Requirements
 mvn, docker and a linux based terminal.
 
+## Consideration
+For the sake of simplicity, the bot uses in memory persistence to track the trades made.
+
 ## How to run
 run the script runme.sh with path of file containing products to trade in this format:
 
