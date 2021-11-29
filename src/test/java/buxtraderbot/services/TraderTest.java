@@ -78,7 +78,7 @@ public class TraderTest {
         underTest.processOrderUpdate(message);
 
         // assert
-        Mockito.verify(productPositionDal, Mockito.times(2)).getProductPositions("p1");
+        Mockito.verify(productPositionDal, Mockito.times(3)).getProductPositions("p1");
         Mockito.verify(positionBuyerSeller).closePosition("1");
         Mockito.verify(positionBuyerSeller).closePosition("2");
         Mockito.verify(positionBuyerSeller).closePosition("3");
@@ -100,7 +100,7 @@ public class TraderTest {
         underTest.processOrderUpdate(message);
 
         // assert
-        Mockito.verify(productPositionDal, Mockito.times(2)).getProductPositions("p1");
+        Mockito.verify(productPositionDal, Mockito.times(3)).getProductPositions("p1");
         Mockito.verify(positionBuyerSeller).closePosition("1");
         Mockito.verify(positionBuyerSeller).closePosition("2");
         Mockito.verify(positionBuyerSeller).closePosition("3");
@@ -122,7 +122,7 @@ public class TraderTest {
         underTest.processOrderUpdate(message);
 
         // assert
-        Mockito.verify(productPositionDal).getProductPositions("p1");
+        Mockito.verify(productPositionDal, Mockito.times(2)).getProductPositions("p1");
         Mockito.verify(positionBuyerSeller).openPosition("p1", 150d);
         Mockito.verify(productPositionDal).registerPositionForProductId("p1", "1");
     }
@@ -141,7 +141,7 @@ public class TraderTest {
         underTest.processOrderUpdate(message);
 
         // assert
-        Mockito.verify(productPositionDal).getProductPositions("p1");
+        Mockito.verify(productPositionDal, Mockito.times(2)).getProductPositions("p1");
         Mockito.verify(positionBuyerSeller).openPosition("p1", 500.0d);
         Mockito.verify(productPositionDal).registerPositionForProductId("p1", "1");
     }

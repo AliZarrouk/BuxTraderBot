@@ -4,6 +4,7 @@ import buxtraderbot.exceptions.MarketConnectorException;
 import buxtraderbot.models.ProductPriceUpdate;
 import buxtraderbot.models.websocketmessages.priceupdate.TradingQuote;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,6 +33,7 @@ public class FeedProcessor {
         this.portfolioValueChannel = portfolioValueChannel;
         this.priceUpdateChannel = priceUpdateChannel;
         this.successfulConnectionChannel = successfulConnectionChannel;
+        om.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     public void process(String payload) {

@@ -4,17 +4,23 @@ import buxtraderbot.models.contracts.ClosePositionResponseDto;
 import buxtraderbot.models.contracts.InvestingAmount;
 import buxtraderbot.models.contracts.OpenPositionRequestDto;
 import buxtraderbot.models.contracts.OpenPositionResponseDto;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.MethodInvocationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Objects;
 
 @Service
 public class PositionBuyerSeller {
+    private final Logger logger = LogManager.getLogger(PositionBuyerSeller.class);
 
     @Value("${market.url.buy}")
     private String openPositionURL;
@@ -44,12 +50,16 @@ public class PositionBuyerSeller {
         dto.setRiskWarningConfirmation("Alles goed");
 
         var entity = new HttpEntity<>(dto, getHeaders());
-        var response = restTemplate.exchange(openPositionURL,
-                HttpMethod.POST,
-                entity,
-                OpenPositionResponseDto.class);
-
-        return Objects.requireNonNull(response.getBody()).getPositionId();
+        try {
+            var response = restTemplate.exchange(openPositionURL,
+                    HttpMethod.POST,
+                    entity,
+                    OpenPositionResponseDto.class);
+            return Objects.requireNonNull(response.getBody()).getPositionId();
+        } catch (HttpClientErrorException e) {
+            logger.error("Trade placement error", e);
+            return null;
+        }
     }
 
     public void closePosition(String positionId) {

@@ -87,11 +87,20 @@ public class Trader {
         var productSellingBuyingPrices
                 = productSellingBuyingPricesMap.get(productPriceUpdate.getProductId());
 
-        if (productPositionDal.getProductPositions(productPriceUpdate.getProductId()).isEmpty()) {
+        if (productPositionDal.getProductPositions(productPriceUpdate.getProductId()) == null
+            || productPositionDal.getProductPositions(productPriceUpdate.getProductId()).isEmpty()) {
             if (productSellingBuyingPrices.getBuyPrice() >= productPriceUpdate.getCurrentPrice()) {
+                var investment = getInvestment(productSellingBuyingPrices.getBuyPrice(),
+                        productPriceUpdate.getCurrentPrice());
+                if (investment == 0d) {
+                    logger.warn("Good opportunity but not enough mula");
+                    return;
+                }
                 var positionId = positionBuyerSeller.openPosition(productPriceUpdate.getProductId(),
-                        getInvestment(productSellingBuyingPrices.getBuyPrice(),
-                                productPriceUpdate.getCurrentPrice()));
+                        investment);
+                if (positionId == null) {
+                    return;
+                }
                 productPositionDal.registerPositionForProductId(productPriceUpdate.getProductId(), positionId);
                 logger.info("Position {} opened for product with ID {}", positionId,
                         productPriceUpdate.getProductId());
@@ -143,14 +152,18 @@ public class Trader {
     }
 
     private Double getInvestment(Double buyPrice, Double currentPrice) {
-        if (getFunds() == 0d) {
+        var funds = getFunds();
+        if (funds == 0d || funds < 10d) {
             return 0d;
         }
 
         if (currentPrice <= (buyPrice/2)) {
             // a bargain ! all innnn!
             Double result = getFunds();
-            updateFunds(0d);
+            if (result >= 500d) {
+                result = 500d;
+            }
+            updateFunds(getFunds() - 500d);
             return result;
         }
 
