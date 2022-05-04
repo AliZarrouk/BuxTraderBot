@@ -77,7 +77,6 @@ public class FeedProcessor {
         String[] splitted = payload.split("amount");
         int end = splitted[1].indexOf('}') - 1;
         String substring = splitted[1].substring(3, end);
-        Double d = Double.parseDouble(substring);
-        return d;
+        return Double.parseDouble(substring);
     }
 }
